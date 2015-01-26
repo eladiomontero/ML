@@ -1,0 +1,71 @@
+# Machine Learning Project. 
+
+# Exercise Devices Prediction:
+
+## Introduction:
+
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement- a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. Tnis project will try to predict whether they did it well or not.
+
+## Synopsis.
+
+This project will consist of building a prediction model for the sensors dataset. It will predict, with a minimal rate of error, whether the participants did the exercise well or they don´t.
+
+## Getting the data.
+
+The data is provided by Groupware, here's the direct link to their website: http://groupware.les.inf.puc-rio.br/har
+
+
+```{r}
+train_url = "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+test_url = "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+train_csv = download.file(train_url, destfile = "./pml-training.csv", method="curl")
+test_csv = download.file(test_url, destfile = "./pml-testing.csv", method="curl")
+train_raw = read.csv("pml-training.csv", na.string = c("NA",""))
+test_raw = read.csv("pml-testing.csv", na.string = c("NA",""))
+nrow(train_raw)
+nrow(test_raw)
+```
+### Cleaning the data
+
+
+We will remove all variables that have at least 1 NA value.
+```{r}
+train= train_raw[,complete.cases(t(train_raw))] 
+test= test_raw[,complete.cases(t(test_raw))] 
+ncol(train)
+ncol(test)
+train$classe = as.factor(train$classe)
+```
+
+
+
+## Model Building.
+
+For this project, we will use the caret package for prediction.
+First, we will train the algorithm with the LDA method (Linear Discriminant Analysis). It is very fast and reliable for this purposes. 
+
+```{r warning=FALSE}
+library(caret)
+set.seed(1235)
+inTrain <- createDataPartition(y=train$classe,
+                              p=0.75, list=FALSE)
+training <- train[inTrain,]
+cross_train <- train[-inTrain,]
+modelFit <- train(classe ~.,data=train, method="lda")
+modelFit
+```
+
+As we can see, the model has an accuracy of 99%. Only less than 1% could not be identified.
+
+## Cross-Validation
+
+The model will be tested with the cross_train dataset.
+```{r}
+prd = predict(modelFit, cross_train)
+confusionMatrix(prd, cross_train$classe)
+```
+
+
+
+
+
